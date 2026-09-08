@@ -330,7 +330,7 @@
             </h2>
 
 
-            <form action="" method="post">
+            <form action="/register" method="POST">
 
                 <div class="form-grid">
 
@@ -342,9 +342,10 @@
                         <label>Student ID</label>
 
                         <input
-                            type="text"
-                            placeholder="Enter Student ID"
-                            required
+                        type="text"
+                        name="college_id"
+                        placeholder="Enter Student ID"
+                        required
                         >
 
                     </div>
@@ -358,6 +359,7 @@
 
                         <input
                             type="text"
+                            name="name"
                             placeholder="Enter full name"
                             required
                         >
@@ -373,6 +375,7 @@
 
                         <input
                             type="date"
+                            name="dob"
                             required
                         >
 
@@ -427,6 +430,7 @@
 
                         <input
                             type="email"
+                            name="email"
                             placeholder="student@gmail.com"
                             required
                         >
@@ -442,6 +446,7 @@
 
                         <input
                             type="tel"
+                            name="phone"
                             placeholder="Enter phone number"
                             required
                         >
@@ -455,7 +460,7 @@
 
                         <label>Course</label>
 
-                        <select required>
+                        <select name="course" required>
 
                             <option value="">
                                 Select Course
@@ -478,7 +483,7 @@
 
                         <label>Semester</label>
 
-                        <select required>
+                        <select name="semester" required>
 
                             <option value="">
                                 Select Semester
@@ -504,6 +509,7 @@
 
                         <input
                             type="text"
+                            name="father_name"
                             placeholder="Enter father/guardian name"
                             required
                         >
@@ -519,6 +525,7 @@
 
                         <input
                             type="tel"
+                            name="parent_phone"
                             placeholder="Enter parent phone"
                         >
 
@@ -532,6 +539,7 @@
                         <label>Address</label>
 
                         <textarea
+                            name="address"
                             placeholder="Enter student's complete address"
                             required
                         ></textarea>

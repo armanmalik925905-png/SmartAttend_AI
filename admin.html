@@ -270,9 +270,9 @@
             height: 180px;
             border-radius: 50%;
             background: conic-gradient(
-                #16a34a 0deg 270deg,
-                #ef4444 270deg 330deg,
-                #f59e0b 330deg 360deg
+                #16a34a 0deg var(--progress),
+                #e5e7eb var(--progress) 360deg
+ 
             );
             display: flex;
             align-items: center;
@@ -326,10 +326,7 @@
         .dot-red {
             background: #ef4444;
         }
-
-        .dot-yellow {
-            background: #f59e0b;
-        }
+ 
 
         /* ================= TABLE ================= */
 
@@ -512,21 +509,21 @@
         <ul class="menu">
 
             <li>
-                <a href="#" class="active">
+                <a href="admin.html" class="active">
                     <span class="menu-icon">🏠</span>
                     <span>Dashboard</span>
                 </a>
             </li>
 
             <li>
-                <a href="./studentR.html">
+                <a href="students.html">
                     <span class="menu-icon">👨‍🎓</span>
                     <span>Students</span>
                 </a>
             </li>
 
             <li>
-                <a href="./teacher.html">
+                <a href="teacher.html">
                     <span class="menu-icon">👨‍🏫</span>
                     <span>Teachers</span>
                 </a>
@@ -601,7 +598,7 @@
                 </div>
 
                 <h3>Total Students</h3>
-                <h2>1,250</h2>
+                <h2>{{ total_students }}</h2>
 
                 <span>↑ 8.2% this month</span>
 
@@ -615,9 +612,9 @@
                 </div>
 
                 <h3>Present Today</h3>
-                <h2>1,080</h2>
+                <h2>{{ present_today }}</h2>
 
-                <span>86.4% attendance</span>
+                <span>  {{ attendance_percentage }}% attendance</span>
 
             </div>
 
@@ -629,7 +626,7 @@
                 </div>
 
                 <h3>Absent Today</h3>
-                <h2>120</h2>
+                <h2>{{ absent_today }}</h2>
 
                 <span style="color:#dc2626;">
                     9.6% absent
@@ -645,9 +642,9 @@
                 </div>
 
                 <h3>Total Classes</h3>
-                <h2>32</h2>
+                <h2>1</h2>
 
-                <span>4 classes active</span>
+                <span>1 classes active</span>
 
             </div>
 
@@ -676,11 +673,10 @@
 
                 <div class="attendance-center">
 
-                    <div class="circle">
-
+                    <div class="circle" style="--progress: {{ attendance_percentage * 3.6 }}deg;">
                         <div class="circle-inner">
 
-                            <h1>86.4%</h1>
+                            <h1>{{ attendance_percentage }}%</h1>
 
                             <p>Attendance</p>
 
@@ -700,7 +696,7 @@
                             Present
                         </span>
 
-                        <b>1,080</b>
+                        <b>{{ present_today }}</b>
 
                     </div>
 
@@ -712,21 +708,10 @@
                             Absent
                         </span>
 
-                        <b>120</b>
+                        <b>{{ absent_today }}</b>
 
                     </div>
-
-
-                    <div class="attendance-row">
-
-                        <span>
-                            <span class="dot dot-yellow"></span>
-                            Late
-                        </span>
-
-                        <b>50</b>
-
-                    </div>
+ 
 
                 </div>
 
@@ -828,39 +813,9 @@
 
                 <tbody>
 
-                    <tr>
+                    
 
-                        <td>
-
-                            <div class="student">
-
-                                <div class="student-avatar">
-                                    A
-                                </div>
-
-                                <div>
-                                    Arman Ahmad
-                                    <small>ID: ST001</small>
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <td>BCA 2st</td>
-
-                        <td>04 Sep 2026</td>
-
-                        <td>09:02 AM</td>
-
-                        <td>
-                            <span class="present">
-                                Present
-                            </span>
-                        </td>
-
-                    </tr>
-
+                    {% for attendance in recent_attendance %}
 
                     <tr>
 
@@ -869,46 +824,12 @@
                             <div class="student">
 
                                 <div class="student-avatar">
-                                    R
+                                    {{ attendance[1][0] }}
                                 </div>
 
                                 <div>
-                                    anas
-                                    <small>ID: ST002</small>
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <td>BCA 2st</td>
-
-                        <td>04 Sep 2026</td>
-
-                        <td>09:08 AM</td>
-
-                        <td>
-                            <span class="present">
-                                Present
-                            </span>
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td>
-
-                            <div class="student">
-
-                                <div class="student-avatar">
-                                    N
-                                </div>
-
-                                <div>
-                                    Neha Sharma
-                                    <small>ID: ST003</small>
+                                    {{ attendance[1] }}
+                                    <small>ID: {{ attendance[0] }}</small>
                                 </div>
 
                             </div>
@@ -917,52 +838,23 @@
 
                         <td>BCA 2nd</td>
 
-                        <td>04 Sep 2026</td>
+                        <td>{{ attendance[2] }}</td>
 
-                        <td>09:15 AM</td>
+                        <td><td>{{ attendance[3] }}</td>
 
                         <td>
-                            <span class="absent">
-                                Absent
-                            </span>
+                            {% if attendance[4] == "Present" %}
+                                <span class="present">Present</span>
+                            {% else %}
+                                <span class="absent">Absent</span>
+                            {% endif %}
                         </td>
 
                     </tr>
 
+                    {% endfor %}
 
-                    <tr>
-
-                        <td>
-
-                            <div class="student">
-
-                                <div class="student-avatar">
-                                    M
-                                </div>
-
-                                <div>
-                                    Mohit Singh
-                                    <small>ID: ST004</small>
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <td>BCA 2nd</td>
-
-                        <td>04 Sep 2026</td>
-
-                        <td>09:21 AM</td>
-
-                        <td>
-                            <span class="present">
-                                Present
-                            </span>
-                        </td>
-
-                    </tr>
-
+                     
                 </tbody>
 
             </table>

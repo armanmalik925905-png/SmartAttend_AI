@@ -349,6 +349,99 @@
                 grid-template-columns: 1fr;
             }
         }
+            .custom-date-picker {
+                position: relative;
+                width: 100%;
+            }
+
+            .date-input-box {
+                height: 42px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: white;
+                padding: 0 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                cursor: pointer;
+                font-size: 14px;
+                }
+
+            .date-input-box:hover {
+            border-color: #2563eb;
+            }
+
+            .calendar {
+                display: none;
+                position: absolute;
+                top: 48px;
+                left: 0;
+                width: 280px;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                padding: 15px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                z-index: 1000;
+            }
+
+            .calendar.show {
+                display: block;
+            }
+
+            .calendar-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+
+            .calendar-header button {
+                border: none;
+                background: #2563eb;
+                color: white;
+                width: 30px;
+                height: 30px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 20px;
+            }
+
+            .weekdays,
+            .days {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                text-align: center;
+                gap: 5px;
+            }
+
+            weekdays span {
+                font-size: 12px;
+                font-weight: bold;
+                color: #666;
+            }
+
+            .days button {
+                border: none;
+                background: transparent;
+                height: 32px;
+                border-radius: 6px;
+                cursor: pointer;
+            }
+
+            .days button:hover {
+                background: #e5edff;
+            }
+
+            .days button.selected {
+                background: #2563eb;
+                color: white;
+                font-weight: bold;
+            }
+
+            .days button.today {
+                border: 1px solid #2563eb;
+            }
     </style>
 </head>
 
@@ -444,7 +537,8 @@
         </div>
 
 
-        <!-- FILTER -->
+    <!-- FILTER -->
+    <form method="GET" action="/attendance"> 
 
         <div class="filter-box">
 
@@ -456,10 +550,40 @@
 
                     <label>Date</label>
 
-                    <input
-                        type="date"
-                        value="2026-09-04"
-                    >
+                    <div class="custom-date-picker">
+
+                        <div class="date-input-box" onclick="toggleCalendar()">
+                            <span id="dateDisplay">DD/MM/YYYY</span>
+                            <span>📅</span>
+                        </div>
+
+                        <input type="hidden" name="date" id="dateInput">
+
+                        <div class="calendar" id="calendar">
+
+                            <div class="calendar-header">
+                                <button type="button" onclick="previousMonth()">‹</button>
+
+                                <strong id="monthYear"></strong>
+
+                                <button type="button" onclick="nextMonth()">›</button>
+                            </div>
+
+                            <div class="weekdays">
+                                <span>Su</span>
+                                <span>Mo</span>
+                                <span>Tu</span>
+                                <span>We</span>
+                                <span>Th</span>
+                                <span>Fr</span>
+                                <span>Sa</span>
+                            </div>
+
+                            <div class="days" id="days"></div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
@@ -517,9 +641,8 @@
 
             </div>
 
-            <button class="filter-btn">
-                🔍 Apply Filter
-            </button>
+            <button type="submit">🔍Apply Filter</button>
+    </form>
 
         </div>
 
@@ -536,7 +659,7 @@
 
                 <h3>Total Students</h3>
 
-                <h2>1,250</h2>
+                <h2>{{ total_students }}</h2>
 
             </div>
 
@@ -549,7 +672,7 @@
 
                 <h3>Present</h3>
 
-                <h2>1,080</h2>
+                <h2>{{ present }}</h2>
 
             </div>
 
@@ -562,7 +685,7 @@
 
                 <h3>Absent</h3>
 
-                <h2>120</h2>
+                <h2>{{ absent }}</h2>
 
             </div>
 
@@ -575,7 +698,7 @@
 
                 <h3>Attendance Rate</h3>
 
-                <h2>86.4%</h2>
+                <h2>{{ attendance_rate }}%</h2>
 
             </div>
 
@@ -618,206 +741,46 @@
 
                 <tbody>
 
+                {% for record in records %}
 
-                    <tr>
-
-                        <td>
-
-                            <div class="student">
-
-                                <div class="avatar">
-                                    A
-                                </div>
-
-                                <div>
-                                    Arman Ahmad
-                                    <small>ID: ST001</small>
-                                </div>
-
+                <tr>
+                    <td>
+                        <div class="student">
+                            <div class="avatar">
+                                {{ record[0][0]|upper }}
                             </div>
 
-                        </td>
-
-                        <td>BCA</td>
-
-                        <td>1st</td>
-
-                        <td>04 Sep 2026</td>
-
-                        <td>09:02 AM</td>
-
-                        <td>
-                            <span class="present">
-                                Present
-                            </span>
-                        </td>
-
-                        <td class="percentage">
-                            92%
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td>
-
-                            <div class="student">
-
-                                <div class="avatar">
-                                    R
-                                </div>
-
-                                <div>
-                                    Rahul Kumar
-                                    <small>ID: ST002</small>
-                                </div>
-
+                            <div>
+                                {{ record[0] }}
+                                <small>ID: {{ record[1] }}</small>
                             </div>
+                        </div>
+                    </td>
 
-                        </td>
+                    <td>-</td>
 
-                        <td>BCA</td>
+                    <td>-</td>
 
-                        <td>1st</td>
+                    <td>{{ record[2] }}</td>
 
-                        <td>04 Sep 2026</td>
+                    <td>{{ record[3] }}</td>
 
-                        <td>09:08 AM</td>
+                    <td>
+                        <span class="present">Present</span>
+                    </td>
 
-                        <td>
-                            <span class="present">
-                                Present
-                            </span>
-                        </td>
+                    <td class="percentage">-</td>
+                </tr>
 
-                        <td class="percentage">
-                            88%
-                        </td>
+                    {% else %}
 
-                    </tr>
+                <tr>
+                    <td colspan="7">
+                        No attendance records found.
+                    </td>
+                </tr>
 
-
-                    <tr>
-
-                        <td>
-
-                            <div class="student">
-
-                                <div class="avatar">
-                                    N
-                                </div>
-
-                                <div>
-                                    Neha Sharma
-                                    <small>ID: ST003</small>
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <td>BCA</td>
-
-                        <td>2nd</td>
-
-                        <td>04 Sep 2026</td>
-
-                        <td>09:15 AM</td>
-
-                        <td>
-                            <span class="absent">
-                                Absent
-                            </span>
-                        </td>
-
-                        <td class="percentage">
-                            76%
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td>
-
-                            <div class="student">
-
-                                <div class="avatar">
-                                    M
-                                </div>
-
-                                <div>
-                                    Mohit Singh
-                                    <small>ID: ST004</small>
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <td>B.Com</td>
-
-                        <td>3rd</td>
-
-                        <td>04 Sep 2026</td>
-
-                        <td>09:21 AM</td>
-
-                        <td>
-                            <span class="present">
-                                Present
-                            </span>
-                        </td>
-
-                        <td class="percentage">
-                            95%
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td>
-
-                            <div class="student">
-
-                                <div class="avatar">
-                                    S
-                                </div>
-
-                                <div>
-                                    Salman Khan
-                                    <small>ID: ST005</small>
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <td>B.Com</td>
-
-                        <td>3rd</td>
-
-                        <td>04 Sep 2026</td>
-
-                        <td>09:25 AM</td>
-
-                        <td>
-                            <span class="present">
-                                Present
-                            </span>
-                        </td>
-
-                        <td class="percentage">
-                            90%
-                        </td>
-
-                    </tr>
-
+                {% endfor %}
 
                 </tbody>
 
@@ -826,6 +789,164 @@
         </div>
 
     </div>
+<script>
 
+let currentDate = new Date();
+
+const selectedDateFromFlask = "{{ selected_date or '' }}";
+
+if (selectedDateFromFlask) {
+    const parts = selectedDateFromFlask.split("-");
+
+    if (parts.length === 3) {
+        currentDate = new Date(
+            Number(parts[0]),
+            Number(parts[1]) - 1,
+            Number(parts[2])
+        );
+    }
+}
+
+let selectedDate = selectedDateFromFlask;
+
+
+function toggleCalendar() {
+
+    document
+        .getElementById("calendar")
+        .classList.toggle("show");
+
+    renderCalendar();
+}
+
+
+function renderCalendar() {
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    const monthNames = [
+        "January", "February", "March",
+        "April", "May", "June",
+        "July", "August", "September",
+        "October", "November", "December"
+    ];
+
+    document.getElementById("monthYear").innerText =
+        monthNames[month] + " " + year;
+
+    const daysContainer =
+        document.getElementById("days");
+
+    daysContainer.innerHTML = "";
+
+    const firstDay =
+        new Date(year, month, 1).getDay();
+
+    const totalDays =
+        new Date(year, month + 1, 0).getDate();
+
+
+    for (let i = 0; i < firstDay; i++) {
+
+        const empty = document.createElement("span");
+
+        daysContainer.appendChild(empty);
+    }
+
+
+    for (let day = 1; day <= totalDays; day++) {
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+        button.innerText = day;
+
+
+        const monthNumber =
+            String(month + 1).padStart(2, "0");
+
+        const dayNumber =
+            String(day).padStart(2, "0");
+
+
+        const dateValue =
+            year + "-" +
+            monthNumber + "-" +
+            dayNumber;
+
+
+        if (dateValue === selectedDate) {
+            button.classList.add("selected");
+        }
+
+
+        button.onclick = function () {
+
+            selectedDate = dateValue;
+
+            document.getElementById("dateInput").value =
+                dateValue;
+
+
+            document.getElementById("dateDisplay").innerText =
+                dayNumber + "/" +
+                monthNumber + "/" +
+                year;
+
+
+            document
+                .getElementById("calendar")
+                .classList.remove("show");
+
+            renderCalendar();
+        };
+
+
+        daysContainer.appendChild(button);
+    }
+}
+
+
+function previousMonth() {
+
+    currentDate.setMonth(
+        currentDate.getMonth() - 1
+    );
+
+    renderCalendar();
+}
+
+
+function nextMonth() {
+
+    currentDate.setMonth(
+        currentDate.getMonth() + 1
+    );
+
+    renderCalendar();
+}
+
+
+// Flask se date aaye to DD/MM/YYYY me dikhao
+if (selectedDate) {
+
+    const parts =
+        selectedDate.split("-");
+
+    if (parts.length === 3) {
+
+        document.getElementById("dateDisplay").innerText =
+            parts[2] + "/" +
+            parts[1] + "/" +
+            parts[0];
+
+        document.getElementById("dateInput").value =
+            selectedDate;
+    }
+}
+
+</script>
 </body>
 </html>
