@@ -71,7 +71,7 @@ while True:
 
         cv2.putText(
             frame,
-            f"Images: {count}/20",
+            f"Images: {count}/10",
             (x, y - 10),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.7,
@@ -81,7 +81,7 @@ while True:
 
     cv2.imshow("Face Registration", frame)
 
-    if cv2.waitKey(100) & 0xFF == ord("q") or count >= 20:
+    if cv2.waitKey(100) & 0xFF == ord("q") or count >= 10:
         break
 
 camera.release()
