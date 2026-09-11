@@ -1,4 +1,5 @@
 from flask import Flask, request, redirect, render_template, render_template_string
+from flask import Flask, render_template
 import sqlite3
 import os
 
@@ -45,10 +46,12 @@ def add_student(name, college_id, dob, gender, email, phone,
 
 @app.route("/")
 def home():
-    return "SmartAttend Backend is Running!"
+    return render_template("index.html")
 
 @app.route("/admin")
 def admin():
+
+
 
     connection = sqlite3.connect(
         os.path.join(os.path.dirname(__file__), "students.db")
@@ -116,6 +119,8 @@ def admin():
 
 @app.route("/student")
 def student():
+    return render_template("studentR.html")
+
     file_path = os.path.join(os.path.dirname(__file__), "studentR.html")
 
     with open(file_path, "r", encoding="utf-8") as file:
@@ -123,6 +128,7 @@ def student():
 
 @app.route("/students")
 def students_list():
+    return render_template("studentR.html")
 
     connection = sqlite3.connect(
         os.path.join(os.path.dirname(__file__), "students.db")
@@ -226,6 +232,7 @@ def students_list():
 
 @app.route("/attendance")
 def attendance_report():
+    return render_template("Attendance.html")
 
     selected_date = request.args.get("date")
 
@@ -307,7 +314,17 @@ def attendance_report():
         absent=absent,
         attendance_rate=attendance_rate
     )
+@app.route("/teacher")
+def teacher():
+    return render_template("teacher.html")
 
+@app.route("/settings")
+def settings():
+    return render_template("setting.html")
+
+@app.route("/logout")
+def logout():
+    return render_template("logout.html")
 
 @app.route("/register", methods=["POST"])
 def register():
