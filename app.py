@@ -72,6 +72,19 @@ def admin():
         os.path.join(os.path.dirname(__file__), "students.db")
     )
     cursor = connection.cursor()
+    # Create attendance table if it does not exist
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS attendance (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        college_id TEXT NOT NULL,
+        attendance_date TEXT NOT NULL,
+        attendance_time TEXT NOT NULL
+    )
+    """)
+
+    connection.commit()
+
 
     # Total students
     cursor.execute("SELECT COUNT(*) FROM students")
@@ -136,14 +149,30 @@ def admin():
 def student():
     return render_template("studentR.html")
 
-    file_path = os.path.join(os.path.dirname(__file__), "studentR.html")
-
-    with open(file_path, "r", encoding="utf-8") as file:
-        return file.read()
-
 @app.route("/students")
 def students_list():
-    return render_template("studentR.html")
+
+    connection = sqlite3.connect(
+        os.path.join(os.path.dirname(__file__), "students.db")
+    )
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT id, name, college_id, dob, gender,
+               email, phone, course, semester
+        FROM students
+        ORDER BY id DESC
+    """)
+
+    students = cursor.fetchall()
+
+    connection.close()
+
+    return render_template(
+        "studentR.html",
+        students=students
+    )
 
     connection = sqlite3.connect(
         os.path.join(os.path.dirname(__file__), "students.db")
@@ -244,16 +273,15 @@ def students_list():
     """
 
     return render_template_string(html, students=students)
-
 @app.route("/attendance")
 def attendance_report():
-    return render_template("Attendance.html")
 
     selected_date = request.args.get("date")
 
     connection = sqlite3.connect(
-    os.path.join(os.path.dirname(__file__), "students.db")
+        os.path.join(os.path.dirname(__file__), "students.db")
     )
+
     cursor = connection.cursor()
 
     # Total students
@@ -295,39 +323,22 @@ def attendance_report():
     absent = total_students - present
 
     if total_students > 0:
-        attendance_rate = round((present / total_students) * 100, 1)
+        attendance_rate = round(
+            (present / total_students) * 100, 1
+        )
     else:
         attendance_rate = 0
 
     connection.close()
 
-    with open("Attendance.html", "r", encoding="utf-8") as file:
-        html = file.read()
-
-    return render_template_string(
-        html,
+    return render_template(
+        "Attendance.html",
         records=records,
         total_students=total_students,
         present=present,
         absent=absent,
         attendance_rate=attendance_rate,
         selected_date=selected_date
-    )
-
-    records = cursor.fetchall()
-
-    connection.close()
-
-    with open("Attendance.html", "r", encoding="utf-8") as file:
-        html = file.read()
-
-    return render_template_string(
-        html,
-        records=records,
-        total_students=total_students,
-        present=present,
-        absent=absent,
-        attendance_rate=attendance_rate
     )
 @app.route("/teacher")
 def teacher():
