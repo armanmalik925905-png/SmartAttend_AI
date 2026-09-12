@@ -4,13 +4,16 @@ import os
 import sqlite3
 from datetime import datetime
 
-# -----------------------------
-# DATABASE ATTENDANCE FUNCTION
-# -----------------------------
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "students.db")
+FACES_DIR = os.path.join(BASE_DIR, "faces")
+
+
 def mark_attendance(college_id):
 
-    connection = sqlite3.connect("students.db")
-    cursor = connection.cursor()
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
 
     cursor.execute(
         "SELECT name FROM students WHERE college_id = ?",
@@ -20,13 +23,12 @@ def mark_attendance(college_id):
     student = cursor.fetchone()
 
     if not student:
-        print("Student not found!")
-        connection.close()
-        return
+        conn.close()
+        return False, "Student not found"
 
     name = student[0]
 
-    current_date = datetime.now().strftime("%Y-%m-%d")
+    today = datetime.now().strftime("%Y-%m-%d")
     current_time = datetime.now().strftime("%H:%M:%S")
 
     cursor.execute("""
@@ -39,20 +41,17 @@ def mark_attendance(college_id):
         )
     """)
 
-    # Same student ko same day baar-baar mark na karne ke liye
     cursor.execute("""
         SELECT id FROM attendance
-        WHERE college_id = ? AND attendance_date = ?
-    """, (college_id, current_date))
+        WHERE college_id = ?
+        AND attendance_date = ?
+    """, (college_id, today))
 
     already_marked = cursor.fetchone()
 
     if already_marked:
-        print("\nAttendance already marked today! ⚠️")
-        print("Name:", name)
-        print("College ID:", college_id)
-        connection.close()
-        return
+        conn.close()
+        return False, "Attendance already marked today"
 
     cursor.execute("""
         INSERT INTO attendance
@@ -61,154 +60,102 @@ def mark_attendance(college_id):
     """, (
         name,
         college_id,
-        current_date,
+        today,
         current_time
     ))
 
-    connection.commit()
-    connection.close()
+    conn.commit()
+    conn.close()
 
-    print("\nAttendance marked successfully! ✅")
-    print("Name:", name)
-    print("College ID:", college_id)
-    print("Date:", current_date)
-    print("Time:", current_time)
+    return True, f"Attendance marked: {name}"
 
 
-# -----------------------------
-# LOAD REGISTERED FACE IMAGES
-# -----------------------------
+def run_camera():
 
-faces_path = "faces"
+    # Load registered face images
+    images = []
+    college_ids = []
 
-if not os.path.exists(faces_path):
-    print("faces folder nahi mila!")
-    exit()
+    for filename in os.listdir(FACES_DIR):
 
-images = []
-labels = []
+        if filename.lower().endswith((".jpg", ".jpeg", ".png")):
 
-for filename in os.listdir(faces_path):
+            path = os.path.join(FACES_DIR, filename)
 
-    if filename.lower().endswith(".jpg"):
+            img = cv2.imread(path)
 
-        try:
-            college_id = filename.rsplit("_", 1)[0]
+            if img is not None:
+                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            image_path = os.path.join(faces_path, filename)
+                images.append(gray)
 
-            image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+                college_id = filename.rsplit("_", 1)[0]
+                college_ids.append(college_id)
 
-            if image is not None:
-                images.append(image)
-                labels.append(college_id)
+    if len(images) == 0:
+        print("No registered faces found!")
+        return
 
-        except Exception:
-            pass
+    print("Registered face images:", len(images))
 
+    # Face recognizer
+    recognizer = cv2.face.LBPHFaceRecognizer_create()
 
-if len(images) == 0:
-    print("Koi registered face image nahi mili!")
-    exit()
+    labels = np.arange(len(images))
 
+    recognizer.train(images, labels)
 
-print("Registered face images:", len(images))
+    # Haar Cascade
+    cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 
+    face_cascade = cv2.CascadeClassifier(cascade_path)
 
-# -----------------------------
-# CREATE FACE RECOGNIZER
-# -----------------------------
+    # Camera
+    camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
-recognizer = cv2.face.LBPHFaceRecognizer_create()
+    if not camera.isOpened():
+        print("Camera open nahi ho raha!")
+        return
 
-# College IDs ko numeric labels me convert karna
-unique_ids = list(set(labels))
+    print("\nCamera started!")
+    print("Face camera ke saamne rakho.")
+    print("Q dabakar camera band kar sakte ho.")
 
-id_to_label = {}
+    attendance_done = False
 
-for index, college_id in enumerate(unique_ids):
-    id_to_label[index] = college_id
+    while True:
 
-numeric_labels = [
-    unique_ids.index(college_id)
-    for college_id in labels
-]
+        ret, frame = camera.read()
 
-recognizer.train(images, np.array(numeric_labels, dtype=np.int32))
+        if not ret:
+            print("Camera frame nahi mil raha!")
+            break
 
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-# -----------------------------
-# FACE DETECTOR
-# -----------------------------
+        faces = face_cascade.detectMultiScale(
+            gray,
+            scaleFactor=1.3,
+            minNeighbors=5
+        )
 
-face_detector = cv2.CascadeClassifier(
-    cv2.data.haarcascades +
-    "haarcascade_frontalface_default.xml"
-)
+        for (x, y, w, h) in faces:
 
+            face = gray[y:y+h, x:x+w]
 
-# -----------------------------
-# START CAMERA
-# -----------------------------
+            label, confidence = recognizer.predict(face)
 
-camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            if confidence < 70:
 
-if not camera.isOpened():
-    print("Camera open nahi hua!")
-    exit()
+                college_id = college_ids[label]
 
-print("\nCamera started!")
-print("Face camera ke saamne rakho.")
-print("Q dabakar camera band kar sakte ho.")
+                if not attendance_done:
 
+                    success, message = mark_attendance(college_id)
 
-attendance_done = False
+                    print(message)
 
-while True:
-
-    ret, frame = camera.read()
-
-    if not ret:
-        print("Camera frame nahi mila!")
-        break
-
-    gray = cv2.cvtColor(
-        frame,
-        cv2.COLOR_BGR2GRAY
-    )
-
-    detected_faces = face_detector.detectMultiScale(
-        gray,
-        scaleFactor=1.3,
-        minNeighbors=5,
-        minSize=(100, 100)
-    )
-
-    for (x, y, w, h) in detected_faces:
-
-        face = gray[y:y+h, x:x+w]
-
-        label, confidence = recognizer.predict(face)
-
-        # LBPH me lower confidence = better match
-        if confidence < 70:
-
-            college_id = id_to_label[label]
-
-            connection = sqlite3.connect("students.db")
-            cursor = connection.cursor()
-
-            cursor.execute(
-                "SELECT name FROM students WHERE college_id = ?",
-                (college_id,)
-            )
-
-            student = cursor.fetchone()
-            connection.close()
-
-            if student:
-
-                name = student[0]
+                    attendance_done = True
 
                 cv2.rectangle(
                     frame,
@@ -220,60 +167,24 @@ while True:
 
                 cv2.putText(
                     frame,
-                    name,
-                    (x, y-30),
+                    "Attendance Marked",
+                    (x, y-10),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
+                    0.7,
                     (0, 255, 0),
                     2
                 )
 
-                cv2.putText(
-                    frame,
-                    "Face Recognized",
-                    (x, y-5),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (0, 255, 0),
-                    2
-                )
+        cv2.imshow("Smart Attendance Camera", frame)
 
-                if not attendance_done:
+        key = cv2.waitKey(1) & 0xFF
 
-                    mark_attendance(college_id)
+        if key == ord("q"):
+            break
 
-                    attendance_done = True
-
-        else:
-
-            cv2.rectangle(
-                frame,
-                (x, y),
-                (x+w, y+h),
-                (0, 0, 255),
-                2
-            )
-
-            cv2.putText(
-                frame,
-                "Unknown Face",
-                (x, y-10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 0, 255),
-                2
-            )
-
-    cv2.imshow(
-        "Smart Attendance - Face Recognition",
-        frame
-    )
-
-    key = cv2.waitKey(1) & 0xFF
-
-    if key == ord("q"):
-        break
+    camera.release()
+    cv2.destroyAllWindows()
 
 
-camera.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    run_camera()

@@ -2,6 +2,8 @@ from flask import Flask, request, redirect, render_template, render_template_str
 from flask import Flask, render_template
 import sqlite3
 import os
+import threading
+from attendance import run_camera
 import numpy as np
 from datetime import datetime
 
@@ -49,6 +51,17 @@ def add_student(name, college_id, dob, gender, email, phone,
 @app.route("/")
 def home():
     return render_template("index.html")
+@app.route("/start-camera")
+def start_camera():
+
+    camera_thread = threading.Thread(
+        target=run_camera,
+        daemon=True
+    )
+
+    camera_thread.start()
+
+    return redirect("/admin")
 
 @app.route("/admin")
 def admin():
