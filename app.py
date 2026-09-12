@@ -3,7 +3,7 @@ from flask import Flask, render_template
 import sqlite3
 import os
 import numpy as np
-from datetime import datetim
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -88,8 +88,8 @@ def admin():
             a.college_id,
             s.name,
             a.attendance_date,
-            a.attendance_time
-            
+            a.attendance_time,
+            'Present'
              
         FROM attendance a
         JOIN students s
